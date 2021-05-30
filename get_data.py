@@ -66,16 +66,7 @@ def write_to_influxdb(data):
         print(status)
     except Exception as exp:
         print(exp)
-    #try: 
-        #client.query('SELECT "aussentemperatur" FROM "home"."autogen"."brushEvents" WHERE time > now() - 4d GROUP BY "user"')
 
 if __name__ == '__main__':
     data = collect_data(HOST, KEY_PATH, VALUE_PATH)
     write_to_influxdb(data)
-
-'''
-1619783132156811000
-1619726733144
-1619776209
-1619776624000
-'''
