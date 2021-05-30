@@ -55,7 +55,7 @@ def collect_data(host: str, key_path: str, value_path: str) -> dict:
         result_dict['fields'].pop('')
     return result_dict
 
-def write_to_influxdb(data):
+def write_to_influxdb(data: dict) -> None:
     try:
         client = InfluxDBClient(host=INFLUXDB_HOST, port=INFLUXDB_PORT, username=INFLUXDB_USER, password=INFLUXDB_PASSWORD, ssl=INFLUXDB_SSL, verify_ssl=INFLUXDB_SSL_VERIFY)
         client.switch_database(INFLUXDB_DATABASE)
