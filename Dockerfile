@@ -29,4 +29,4 @@ ENV INFLUXDB_ORG="influxdata"
 ENV INFLUXDB_MEASUREMENT_NAME="heizung"
 
 # 8. Skript als Entrypoint ausführen
-CMD ["python", "get_data.py"]
+CMD ["uv", "run", "get_data.py"]
