@@ -72,13 +72,9 @@ def collect_data(host: str, key_path: str, value_path: str) -> dict:
         key, *unit = element[0].split(";")
         result_dict["fields"][
             slugify(key, separator="_", replacements=[["ö", "oe"], ["ä", "ae"]])
-        ] = element[
-            1
-        ]  # , 'unit': safe_list_get(unit, 0, None)}
+        ] = element[1]
     result_dict["time"] = datetime.utcnow().isoformat()
     result_dict["measurement"] = "heizung"
-    if result_dict["fields"].get(""):
-        result_dict["fields"].pop("")
     return result_dict
 
 
