@@ -18,5 +18,17 @@ RUN pip install uv
 # 6. Abhängigkeiten installieren
 RUN uv pip install --system --no-cache-dir .
 
-# 7. Skript als Entrypoint ausführen
+# 7. Konfigurierbare Umgebungsvariablen (Default-Werte wie im Python-Code)
+ENV BMK_HOST="http://bmk30"
+ENV KEY_PATH="/daqdesc.cgi"
+ENV VALUE_PATH="/daqdata.cgi"
+ENV INFLUXDB_HOST="changeme"
+ENV INFLUXDB_PORT=8086
+ENV INFLUXDB_USER="changeme"
+ENV INFLUXDB_PASSWORD="changeme"
+ENV INFLUXDB_DATABASE="heater"
+ENV INFLUXDB_SSL="False"
+ENV INFLUXDB_SSL_VERIFY="False"
+
+# 8. Skript als Entrypoint ausführen
 CMD ["python", "get_data.py"]
