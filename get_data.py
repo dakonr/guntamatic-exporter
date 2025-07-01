@@ -1,10 +1,13 @@
 import json
 import requests
-import time
-import os
+import influxdb_client, os, time
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
 import pprint
 from datetime import date, datetime
-from influxdb import InfluxDBClient
+
+# from influxdb import InfluxDBClient
+
 from slugify import slugify
 
 HOST = os.environ.get(
@@ -26,12 +29,9 @@ def get_env(key, default, cast=str):
 
 
 INFLUXDB_HOST = get_env("INFLUXDB_HOST", "changeme")
-INFLUXDB_PORT = get_env("INFLUXDB_PORT", 8086, int)
 INFLUXDB_USER = get_env("INFLUXDB_USER", "changeme")
-INFLUXDB_PASSWORD = get_env("INFLUXDB_PASSWORD", "changeme")
-INFLUXDB_DATABASE = get_env("INFLUXDB_DATABASE", "heater")
-INFLUXDB_SSL = get_env("INFLUXDB_SSL", False, bool)
-INFLUXDB_SSL_VERIFY = get_env("INFLUXDB_SSL_VERIFY", False, bool)
+INFLUXDB_TOKEN = get_env("INFLUXDB_TOKEN", "changeme")
+INFLUXDB_BUCKET = get_env("INFLUXDB_BUCKET", "heater")
 
 
 def safe_list_get(l: list, idx: int, default):
@@ -79,23 +79,9 @@ def collect_data(host: str, key_path: str, value_path: str) -> dict:
 
 
 def write_to_influxdb(data: dict) -> None:
-    try:
-        client = InfluxDBClient(
-            host=INFLUXDB_HOST,
-            port=INFLUXDB_PORT,
-            username=INFLUXDB_USER,
-            password=INFLUXDB_PASSWORD,
-            ssl=INFLUXDB_SSL,
-            verify_ssl=INFLUXDB_SSL_VERIFY,
-        )
-        client.switch_database(INFLUXDB_DATABASE)
-    except Exception as exp:
-        print(exp)
-    try:
-        status = client.write_points([data])
-        print(status)
-    except Exception as exp:
-        print(exp)
+    client = influxdb_client.InfluxDBClient(url=INFLUXDB_HOST, token=INFLUXDB_TOKEN)
+    write_api = client.write_api(write_options=SYNCHRONOUS)
+    write_api.write(bucket=INFLUXDB_BUCKET, org="influxdata", record=data)
 
 
 if __name__ == "__main__":
