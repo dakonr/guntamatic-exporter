@@ -1,10 +1,11 @@
 import json
 import requests
-import time
-import os
+import influxdb_client, os, time
+from influxdb_client import Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
 import pprint
 from datetime import date, datetime
-from influxdb import InfluxDBClient
+
 from slugify import slugify
 
 HOST = os.environ.get(
@@ -25,13 +26,16 @@ def get_env(key, default, cast=str):
     return cast(value)
 
 
-INFLUXDB_HOST = get_env("INFLUXDB_HOST", "changeme")
-INFLUXDB_PORT = get_env("INFLUXDB_PORT", 8086, int)
-INFLUXDB_USER = get_env("INFLUXDB_USER", "changeme")
-INFLUXDB_PASSWORD = get_env("INFLUXDB_PASSWORD", "changeme")
-INFLUXDB_DATABASE = get_env("INFLUXDB_DATABASE", "heater")
-INFLUXDB_SSL = get_env("INFLUXDB_SSL", False, bool)
-INFLUXDB_SSL_VERIFY = get_env("INFLUXDB_SSL_VERIFY", False, bool)
+INFLUXDB_HOST = get_env("INFLUXDB_HOST", "http://localhost:8086")
+INFLUXDB_ORG = get_env("INFLUXDB_ORG", "influxdata")
+INFLUXDB_TOKEN = get_env(
+    "INFLUXDB_TOKEN",
+    "changeme",
+)
+INFLUXDB_BUCKET = get_env("INFLUXDB_BUCKET", "heater")
+INFLUXDB_MEASUREMENT_NAME = get_env(
+    "INFLUXDB_MEASUREMENT_NAME", "heizung"
+)  # Measurement name in InfluxDB, defaults to 'heizung'
 
 
 def safe_list_get(l: list, idx: int, default):
@@ -68,34 +72,31 @@ def collect_data(host: str, key_path: str, value_path: str) -> dict:
         key, *unit = element[0].split(";")
         result_dict["fields"][
             slugify(key, separator="_", replacements=[["ö", "oe"], ["ä", "ae"]])
-        ] = element[
-            1
-        ]  # , 'unit': safe_list_get(unit, 0, None)}
+        ] = element[1]
     result_dict["time"] = datetime.utcnow().isoformat()
     result_dict["measurement"] = "heizung"
-    if result_dict["fields"].get(""):
-        result_dict["fields"].pop("")
     return result_dict
 
 
 def write_to_influxdb(data: dict) -> None:
-    try:
-        client = InfluxDBClient(
-            host=INFLUXDB_HOST,
-            port=INFLUXDB_PORT,
-            username=INFLUXDB_USER,
-            password=INFLUXDB_PASSWORD,
-            ssl=INFLUXDB_SSL,
-            verify_ssl=INFLUXDB_SSL_VERIFY,
-        )
-        client.switch_database(INFLUXDB_DATABASE)
-    except Exception as exp:
-        print(exp)
-    try:
-        status = client.write_points([data])
-        print(status)
-    except Exception as exp:
-        print(exp)
+    client = influxdb_client.InfluxDBClient(
+        url=INFLUXDB_HOST,
+        token=INFLUXDB_TOKEN,
+        org=INFLUXDB_ORG,
+    )
+    write_api = client.write_api(write_options=SYNCHRONOUS)
+    point = (
+        Point(INFLUXDB_MEASUREMENT_NAME)
+        .tag("user", data["tags"]["user"])
+        .tag("device", data["tags"]["device"])
+        .time(data["time"], WritePrecision.NS)
+    )
+    pprint.pprint(data["fields"])
+    for key, value in data["fields"].items():
+        if key:
+            point.field(key, value)
+    write_api.write(bucket=INFLUXDB_BUCKET, record=point)
+    client.close()
 
 
 if __name__ == "__main__":
