@@ -1,4 +1,0 @@
-requests==2.22.0
-python-slugify==4.0.1
-influxdb==5.3.1
-
