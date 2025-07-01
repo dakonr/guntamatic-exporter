@@ -23,9 +23,10 @@ ENV BMK_HOST="http://bmk30"
 ENV KEY_PATH="/daqdesc.cgi"
 ENV VALUE_PATH="/daqdata.cgi"
 ENV INFLUXDB_HOST="changeme"
-ENV INFLUXDB_USER="changeme"
 ENV INFLUXDB_TOKEN="changeme"
 ENV INFLUXDB_BUCKET="heater"
+ENV INFLUXDB_ORG="influxdata"
+ENV INFLUXDB_MEASUREMENT_NAME="heizung"
 
 # 8. Skript als Entrypoint ausführen
 CMD ["python", "get_data.py"]

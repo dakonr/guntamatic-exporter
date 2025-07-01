@@ -1,12 +1,10 @@
 import json
 import requests
 import influxdb_client, os, time
-from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client import Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import pprint
 from datetime import date, datetime
-
-# from influxdb import InfluxDBClient
 
 from slugify import slugify
 
@@ -28,10 +26,16 @@ def get_env(key, default, cast=str):
     return cast(value)
 
 
-INFLUXDB_HOST = get_env("INFLUXDB_HOST", "changeme")
-INFLUXDB_USER = get_env("INFLUXDB_USER", "changeme")
-INFLUXDB_TOKEN = get_env("INFLUXDB_TOKEN", "changeme")
+INFLUXDB_HOST = get_env("INFLUXDB_HOST", "http://localhost:8086")
+INFLUXDB_ORG = get_env("INFLUXDB_ORG", "influxdata")
+INFLUXDB_TOKEN = get_env(
+    "INFLUXDB_TOKEN",
+    "changeme",
+)
 INFLUXDB_BUCKET = get_env("INFLUXDB_BUCKET", "heater")
+INFLUXDB_MEASUREMENT_NAME = get_env(
+    "INFLUXDB_MEASUREMENT_NAME", "heizung"
+)  # Measurement name in InfluxDB, defaults to 'heizung'
 
 
 def safe_list_get(l: list, idx: int, default):
@@ -79,9 +83,24 @@ def collect_data(host: str, key_path: str, value_path: str) -> dict:
 
 
 def write_to_influxdb(data: dict) -> None:
-    client = influxdb_client.InfluxDBClient(url=INFLUXDB_HOST, token=INFLUXDB_TOKEN)
+    client = influxdb_client.InfluxDBClient(
+        url=INFLUXDB_HOST,
+        token=INFLUXDB_TOKEN,
+        org=INFLUXDB_ORG,
+    )
     write_api = client.write_api(write_options=SYNCHRONOUS)
-    write_api.write(bucket=INFLUXDB_BUCKET, org="influxdata", record=data)
+    point = (
+        Point(INFLUXDB_MEASUREMENT_NAME)
+        .tag("user", data["tags"]["user"])
+        .tag("device", data["tags"]["device"])
+        .time(data["time"], WritePrecision.NS)
+    )
+    pprint.pprint(data["fields"])
+    for key, value in data["fields"].items():
+        if key:
+            point.field(key, value)
+    write_api.write(bucket=INFLUXDB_BUCKET, record=point)
+    client.close()
 
 
 if __name__ == "__main__":
