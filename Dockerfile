@@ -1,5 +1,5 @@
 # 1. Offizielles Python-Image als Basis
-FROM python:3.12-slim
+FROM python:3.10-slim
 
 # 2. Systemabhängigkeiten installieren (z.B. für slugify, influxdb, uv)
 RUN apt-get update && \
@@ -29,4 +29,4 @@ ENV INFLUXDB_ORG="influxdata"
 ENV INFLUXDB_MEASUREMENT_NAME="heizung"
 
 # 8. Skript als Entrypoint ausführen
-CMD ["uv", "run", "get_data.py"]
+CMD ["python3", "get_data.py"]
