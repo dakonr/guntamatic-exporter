@@ -68,6 +68,7 @@ def collect_data(host: str, key_path: str, value_path: str) -> dict:
     keys = request_data(host, key_path)
     values = request_data(host, value_path)
     result_set = set(zip(str(keys).split("\n"), str(values).split("\n")))
+
     for element in result_set:
         key, *unit = element[0].split(";")
         result_dict["fields"][
@@ -75,6 +76,7 @@ def collect_data(host: str, key_path: str, value_path: str) -> dict:
         ] = element[1]
     result_dict["time"] = datetime.utcnow().isoformat()
     result_dict["measurement"] = "heizung"
+
     return result_dict
 
 
@@ -91,7 +93,7 @@ def write_to_influxdb(data: dict) -> None:
         .tag("device", data["tags"]["device"])
         .time(data["time"], WritePrecision.NS)
     )
-    pprint.pprint(data["fields"])
+
     for key, value in data["fields"].items():
         if key:
             point.field(key, value)
