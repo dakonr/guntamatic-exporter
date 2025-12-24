@@ -1,5 +1,5 @@
 # 1. Offizielles Python-Image als Basis
-FROM python:3.10-slim
+FROM python:3.14-slim
 
 # 2. Systemabhängigkeiten installieren (z.B. für slugify, influxdb, uv)
 RUN apt-get update && \
